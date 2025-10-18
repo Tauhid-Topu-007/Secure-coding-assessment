@@ -2186,23 +2186,165 @@ public class AntiCheatingIDE extends Application {
         consoleOutput.appendText("🤖 Running auto tests for " + currentFile.name + "...\n");
 
         SampleTestCase testCase = sampleCases.get(currentFile.name);
-        if (testCase != null && !testCase.input().isEmpty()) {
-            // Simulate test execution
-            String result = executeProgramLogic(languageChoiceBox.getValue(),
-                    codeEditor.getText(), testCase.input());
-
-            boolean testPassed = result.contains(testCase.expectedOutput()) ||
-                    testCase.expectedOutput().isEmpty();
-
-            if (testPassed) {
-                consoleOutput.appendText("✅ Test PASSED: Output matches expected result\n");
-            } else {
-                consoleOutput.appendText("❌ Test FAILED: Output doesn't match expected\n");
-                consoleOutput.appendText("   Expected: " + testCase.expectedOutput() + "\n");
-                consoleOutput.appendText("   Got: " + result + "\n");
-            }
+        if (testCase != null) {
+            runEnhancedTest(testCase);
         } else {
             consoleOutput.appendText("⚠️ No test cases defined. Use Input/Output tab to set up tests.\n");
+        }
+    }
+
+    private void runEnhancedTest(SampleTestCase testCase) {
+        // Validate test case
+        if (testCase.input().isEmpty() && testCase.expectedOutput().isEmpty()) {
+            consoleOutput.appendText("⚡ Test case has no input or expected output - running basic validation\n");
+        }
+
+        String language = languageChoiceBox.getValue();
+        String code = codeEditor.getText();
+
+        // Pre-execution validation
+        if (code == null || code.trim().isEmpty()) {
+            consoleOutput.appendText("❌ TEST FAILED: No code to execute\n");
+            logCheatingEvent("EMPTY_CODE_TEST", "Attempted to test empty code", 2);
+            return;
+        }
+
+        if (language == null || language.trim().isEmpty()) {
+            consoleOutput.appendText("❌ TEST FAILED: No programming language selected\n");
+            return;
+        }
+
+        consoleOutput.appendText("🔧 Language: " + language + "\n");
+        consoleOutput.appendText("📥 Input: " + (testCase.input().isEmpty() ? "[none]" : testCase.input()) + "\n");
+        consoleOutput.appendText("📤 Expected: " + (testCase.expectedOutput().isEmpty() ? "[any output]" : testCase.expectedOutput()) + "\n");
+
+        try {
+            // Execute with timing
+            long startTime = System.currentTimeMillis();
+            String result = executeProgramLogic(language, code, testCase.input());
+            long executionTime = System.currentTimeMillis() - startTime;
+
+            // Enhanced result evaluation
+            boolean testPassed = evaluateTestResult(result, testCase.expectedOutput());
+            String formattedResult = result.trim().isEmpty() ? "[no output]" : result;
+
+            consoleOutput.appendText("💻 Actual Output: " + formattedResult + "\n");
+            consoleOutput.appendText("⏱️ Execution Time: " + executionTime + "ms\n");
+
+            if (testPassed) {
+                consoleOutput.appendText("🎉 ✅ TEST PASSED!\n");
+
+                // Performance feedback
+                if (executionTime > 2000) {
+                    consoleOutput.appendText("💡 Performance Note: Code execution is slow (" + executionTime + "ms)\n");
+                }
+
+                // Code quality check
+                if (code.split("\n").length > 50) {
+                    consoleOutput.appendText("💡 Code Style: Consider breaking down into smaller functions\n");
+                }
+            } else {
+                consoleOutput.appendText("💥 ❌ TEST FAILED!\n");
+
+                // Provide helpful feedback
+                if (result.trim().isEmpty()) {
+                    consoleOutput.appendText("💡 Hint: Your code produced no output. Check print statements.\n");
+                } else if (testCase.expectedOutput().toLowerCase().contains("error") && !result.toLowerCase().contains("error")) {
+                    consoleOutput.appendText("💡 Hint: Expected error handling but none was found\n");
+                }
+
+                logCheatingEvent("TEST_FAILED", "Test case failed for " + currentFile.name, 1);
+            }
+
+            // Additional analysis
+            provideAdditionalFeedback(code, result, testPassed, executionTime);
+
+        } catch (Exception e) {
+            consoleOutput.appendText("💀 TEST ERROR: " + e.getMessage() + "\n");
+            consoleOutput.appendText("💡 Check your code for syntax errors or infinite loops\n");
+            logCheatingEvent("TEST_ERROR", "Test execution error: " + e.getMessage(), 2);
+        }
+
+        consoleOutput.appendText("\n");
+    }
+
+    private boolean evaluateTestResult(String actual, String expected) {
+        if (expected.isEmpty()) {
+            return !actual.trim().isEmpty(); // Any non-empty output passes
+        }
+
+        if (actual == null || actual.trim().isEmpty()) {
+            return false;
+        }
+
+        // Flexible matching strategies
+        String cleanActual = actual.trim().toLowerCase();
+        String cleanExpected = expected.trim().toLowerCase();
+
+        // Try exact match first
+        if (cleanActual.equals(cleanExpected)) {
+            return true;
+        }
+
+        // Try contains match
+        if (cleanActual.contains(cleanExpected)) {
+            return true;
+        }
+
+        // Try line-by-line matching for multi-line outputs
+        String[] actualLines = cleanActual.split("\n");
+        String[] expectedLines = cleanExpected.split("\n");
+
+        for (String expectedLine : expectedLines) {
+            boolean lineFound = false;
+            for (String actualLine : actualLines) {
+                if (actualLine.contains(expectedLine)) {
+                    lineFound = true;
+                    break;
+                }
+            }
+            if (!lineFound) {
+                return false;
+            }
+        }
+
+        return expectedLines.length > 0;
+    }
+
+    private void provideAdditionalFeedback(String code, String result, boolean testPassed, long executionTime) {
+        consoleOutput.appendText("📊 Additional Analysis:\n");
+
+        // Code metrics
+        int lineCount = code.split("\n").length;
+        consoleOutput.appendText("   📝 Lines of code: " + lineCount + "\n");
+
+        // Complexity estimation
+        if (lineCount > 100) {
+            consoleOutput.appendText("   💡 Consider refactoring: Code is quite long\n");
+        }
+
+        // Performance feedback
+        if (executionTime > 1000) {
+            consoleOutput.appendText("   ⚡ Performance: Execution is slower than average\n");
+        } else if (executionTime < 100) {
+            consoleOutput.appendText("   🚀 Performance: Excellent execution speed\n");
+        }
+
+        // Output analysis
+        if (result.length() > 500) {
+            consoleOutput.appendText("   📄 Output: Very large output generated\n");
+        }
+
+        // Language-specific tips
+        String language = languageChoiceBox.getValue();
+        if ("java".equalsIgnoreCase(language)) {
+            if (!code.contains("public class") && code.contains("System.out")) {
+                consoleOutput.appendText("   ☕ Java Tip: Remember to define a class structure\n");
+            }
+        } else if ("python".equalsIgnoreCase(language)) {
+            if (code.contains("print(") && !code.contains("def ")) {
+                consoleOutput.appendText("   🐍 Python Tip: Consider organizing code into functions\n");
+            }
         }
     }
 
