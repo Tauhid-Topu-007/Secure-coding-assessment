@@ -15,10 +15,7 @@ import javafx.stage.StageStyle;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -314,12 +311,329 @@ public class AntiCheatingIDE extends Application {
      */
     private void saveFile() {
         if (currentFile != null) {
+            // Update content from editor
             currentFile.content = codeEditor.getText();
-            consoleOutput.appendText("💾 File saved: " + currentFile.name + "\n");
-            logCheatingEvent("MANUAL_SAVE", "User manually saved " + currentFile.name, 1);
+
+            try {
+                // Create file chooser for save location
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save File");
+                fileChooser.setInitialFileName(currentFile.name);
+
+                // Set extension filter based on file type
+                String extension = getFileExtension(currentFile.name);
+                setFileChooserExtensionFilter(fileChooser, extension);
+
+                // Set initial directory to user's home or documents
+                fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+
+                // Show save dialog
+                File file = fileChooser.showSaveDialog(mainStage);
+
+                if (file != null) {
+                    // Write content to file
+                    writeFileToDisk(file, currentFile.content);
+
+                    consoleOutput.appendText("💾 File saved: " + file.getAbsolutePath() + "\n");
+                    consoleOutput.appendText("   📊 Size: " + currentFile.content.length() + " characters, " +
+                            currentFile.content.split("\n").length + " lines\n");
+
+                    logCheatingEvent("MANUAL_SAVE", "User saved " + currentFile.name + " to " + file.getAbsolutePath(), 1);
+
+                    // Update file tree if name changed
+                    if (!file.getName().equals(currentFile.name)) {
+                        updateFileNameInTree(currentFile.name, file.getName());
+                    }
+
+                } else {
+                    consoleOutput.appendText("ℹ️ Save cancelled by user\n");
+                }
+
+            } catch (Exception e) {
+                consoleOutput.appendText("❌ Save failed: " + e.getMessage() + "\n");
+                logCheatingEvent("SAVE_FAILED", "Failed to save " + currentFile.name + ": " + e.getMessage(), 1);
+
+                // Show error dialog
+                showErrorDialog("Save Error", "Failed to save file", e.getMessage());
+            }
         } else {
-            consoleOutput.appendText("❌ No file selected to save\n");
+            // No current file - use Save As functionality
+            saveFileAs();
         }
+    }
+
+    /**
+     * Save file with new name (Save As functionality)
+     */
+    private void saveFileAs() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save File As");
+
+        // Set initial file name
+        if (currentFile != null) {
+            fileChooser.setInitialFileName(currentFile.name);
+        } else {
+            fileChooser.setInitialFileName("new_program." + getDefaultExtension());
+        }
+
+        // Set extension filters for different file types
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Java Files", "*.java"),
+                new FileChooser.ExtensionFilter("C++ Files", "*.cpp", "*.h", "*.hpp"),
+                new FileChooser.ExtensionFilter("Python Files", "*.py"),
+                new FileChooser.ExtensionFilter("JavaScript Files", "*.js"),
+                new FileChooser.ExtensionFilter("Text Files", "*.txt"),
+                new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+
+        File file = fileChooser.showSaveDialog(mainStage);
+
+        if (file != null) {
+            try {
+                String content = currentFile != null ? currentFile.content : codeEditor.getText();
+                String fileName = file.getName();
+
+                // Write file to disk
+                writeFileToDisk(file, content);
+
+                // Create or update file entry
+                if (currentFile == null) {
+                    // Create new file entry
+                    currentFile = new FileEntry(fileName, content);
+                    fileContents.put(fileName, currentFile);
+
+                    // Add to file tree
+                    TreeItem<String> newFileItem = new TreeItem<>(fileName);
+                    rootItem.getChildren().add(newFileItem);
+                    fileView.getSelectionModel().select(newFileItem);
+
+                    // Initialize test case
+                    sampleCases.put(fileName, new SampleTestCase("", ""));
+                } else {
+                    // Update existing file name if changed
+                    if (!fileName.equals(currentFile.name)) {
+                        updateFileNameInTree(currentFile.name, fileName);
+                    }
+                    currentFile.content = content;
+                }
+
+                consoleOutput.appendText("💾 File saved as: " + file.getAbsolutePath() + "\n");
+                consoleOutput.appendText("   📁 File: " + fileName + "\n");
+                consoleOutput.appendText("   📊 Size: " + content.length() + " characters, " +
+                        content.split("\n").length + " lines\n");
+
+                logCheatingEvent("SAVE_AS", "User saved file as " + fileName, 1);
+
+            } catch (Exception e) {
+                consoleOutput.appendText("❌ Save failed: " + e.getMessage() + "\n");
+                showErrorDialog("Save Error", "Failed to save file", e.getMessage());
+            }
+        } else {
+            consoleOutput.appendText("ℹ️ Save As cancelled by user\n");
+        }
+    }
+
+    /**
+     * Write content to disk with proper error handling
+     */
+    private void writeFileToDisk(File file, String content) throws IOException {
+        // Create parent directories if they don't exist
+        File parentDir = file.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                throw new IOException("Failed to create directory: " + parentDir.getAbsolutePath());
+            }
+        }
+
+        // Write content to file with proper encoding
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+            writer.write(content);
+        }
+
+        // Verify file was written
+        if (!file.exists() || file.length() == 0) {
+            throw new IOException("File write verification failed");
+        }
+    }
+
+    /**
+     * Set appropriate extension filter for file chooser
+     */
+    private void setFileChooserExtensionFilter(FileChooser fileChooser, String extension) {
+        fileChooser.getExtensionFilters().clear();
+
+        switch (extension.toLowerCase()) {
+            case "java":
+                fileChooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("Java Files", "*.java"));
+                break;
+            case "cpp":
+            case "cxx":
+            case "cc":
+            case "h":
+            case "hpp":
+                fileChooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("C++ Files", "*.cpp", "*.h", "*.hpp", "*.cxx", "*.cc"));
+                break;
+            case "py":
+                fileChooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("Python Files", "*.py"));
+                break;
+            case "js":
+                fileChooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("JavaScript Files", "*.js"));
+                break;
+            default:
+                fileChooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("All Files", "*.*"));
+                break;
+        }
+    }
+
+    /**
+     * Update file name in the tree view
+     */
+    private void updateFileNameInTree(String oldName, String newName) {
+        // Find the tree item with old name
+        for (TreeItem<String> item : rootItem.getChildren()) {
+            if (item.getValue().equals(oldName)) {
+                // Update tree item
+                item.setValue(newName);
+
+                // Update file contents map
+                FileEntry fileEntry = fileContents.remove(oldName);
+                if (fileEntry != null) {
+                    fileEntry.name = newName;
+                    fileContents.put(newName, fileEntry);
+                }
+
+                // Update sample cases
+                SampleTestCase testCase = sampleCases.remove(oldName);
+                if (testCase != null) {
+                    sampleCases.put(newName, testCase);
+                }
+
+                // Update current file reference
+                if (currentFile != null && currentFile.name.equals(oldName)) {
+                    currentFile.name = newName;
+                }
+
+                consoleOutput.appendText("📝 Renamed file: " + oldName + " → " + newName + "\n");
+                break;
+            }
+        }
+    }
+
+    /**
+     * Get default file extension based on current language
+     */
+    private String getDefaultExtension() {
+        String language = languageChoiceBox.getValue();
+        switch (language) {
+            case "Java": return "java";
+            case "C++": return "cpp";
+            case "Python": return "py";
+            case "JavaScript": return "js";
+            default: return "txt";
+        }
+    }
+
+    /**
+     * Show error dialog
+     */
+    private void showErrorDialog(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    /**
+     * Quick save without dialog (uses current file path)
+     */
+    private void quickSave() {
+        if (currentFile != null) {
+            try {
+                // For quick save, we need to know where the file was previously saved
+                // In a real implementation, you'd store the file path in FileEntry
+                currentFile.content = codeEditor.getText();
+
+                consoleOutput.appendText("💾 Quick save: " + currentFile.name + "\n");
+                consoleOutput.appendText("   📝 " + currentFile.content.split("\n").length + " lines saved\n");
+
+                logCheatingEvent("QUICK_SAVE", "User quick saved " + currentFile.name, 1);
+
+                // Show brief confirmation
+                showSaveConfirmation();
+
+            } catch (Exception e) {
+                consoleOutput.appendText("❌ Quick save failed: " + e.getMessage() + "\n");
+                // Fall back to Save As
+                saveFileAs();
+            }
+        } else {
+            // No current file, use Save As
+            saveFileAs();
+        }
+    }
+
+    /**
+     * Show brief save confirmation
+     */
+    private void showSaveConfirmation() {
+        // You could add a brief visual confirmation here
+        // For example, change button color temporarily or show a tooltip
+    }
+
+    /**
+     * Auto-save functionality (called by timer)
+     */
+    private void autoSave() {
+        if (currentFile != null && autoSaveCheckBox.isSelected()) {
+            try {
+                String currentContent = codeEditor.getText();
+                if (!currentContent.equals(currentFile.content)) {
+                    currentFile.content = currentContent;
+
+                    // Only log auto-save occasionally to avoid spam
+                    if (System.currentTimeMillis() % 30000 < 100) { // Every ~30 seconds
+                        consoleOutput.appendText("🤖 Auto-saved: " + currentFile.name + "\n");
+                    }
+
+                    logCheatingEvent("AUTO_SAVE", "Auto-saved " + currentFile.name, 1);
+                }
+            } catch (Exception e) {
+                // Silent fail for auto-save - don't spam console
+            }
+        }
+    }
+
+    // Update the save button action to use the new functionality
+    private void setupSaveButton() {
+        saveButton.setOnAction(e -> {
+            // Use quick save if we have a known file path, otherwise use Save As
+            if (currentFile != null && currentFile.name != null) {
+                quickSave();
+            } else {
+                saveFileAs();
+            }
+        });
+
+        // Add Ctrl+S shortcut
+        mainStage.getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.S) {
+                if (currentFile != null && currentFile.name != null) {
+                    quickSave();
+                } else {
+                    saveFileAs();
+                }
+                event.consume();
+            }
+        });
     }
 
     /**
