@@ -170,14 +170,7 @@ Debug session frequency
 Code similarity scores
 
 📁 Project Structure
-text
-src/
-├── org/example/ide/
-│   └── AntiCheatingIDE.java  # Main application class
-resources/
-├── styles/                   # CSS stylesheets
-├── icons/                    # Application icons
-└── config/                   # Configuration files
+![image alt]('https://github.com/Tauhid-Topu-007/Secure-coding-assessment/blob/main/ide.png')
 🏗️ Architecture
 Key Components
 UI Layer: JavaFX-based interface with custom controls
