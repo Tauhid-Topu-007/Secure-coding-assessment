@@ -125,6 +125,8 @@ public class AntiCheatingIDE extends Application {
     private static final String HIGH_RISK = "#f38ba8";
     private static final String MEDIUM_RISK = "#fab387";
     private static final String LOW_RISK = "#f9e2af";
+    private static final String SET_BG = "#cccccc";
+
 
     private final Map<String, String> languageColorMap = Map.of(
             "Java", "#f28fad", "Python", "#a6e3a1", "C++", "#74c7ce", "JavaScript", "#f9e2af"
@@ -2796,22 +2798,22 @@ public class AntiCheatingIDE extends Application {
 
         // === GENERAL SETTINGS TAB ===
         Tab generalTab = new Tab("General");
-        generalTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        generalTab.setStyle("-fx-background-color: " + SET_BG + ";");
         generalTab.setContent(createGeneralSettingsTab());
 
         // === EDITOR SETTINGS TAB ===
         Tab editorTab = new Tab("Editor");
-        editorTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        editorTab.setStyle("-fx-background-color: " + SET_BG + ";");
         editorTab.setContent(createEditorSettingsTab());
 
         // === APPEARANCE SETTINGS TAB ===
         Tab appearanceTab = new Tab("Appearance");
-        appearanceTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        appearanceTab.setStyle("-fx-background-color: " + SET_BG + ";");
         appearanceTab.setContent(createAppearanceSettingsTab());
 
         // === SECURITY SETTINGS TAB ===
         Tab securityTab = new Tab("Security");
-        securityTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        securityTab.setStyle("-fx-background-color: " + SET_BG + ";");
         securityTab.setContent(createSecuritySettingsTab());
 
         settingsTabs.getTabs().addAll(generalTab, editorTab, appearanceTab, securityTab);
@@ -3143,7 +3145,7 @@ public class AntiCheatingIDE extends Application {
         ComboBox<String> themeComboBox = new ComboBox<>();
         themeComboBox.getItems().addAll("Dark", "Light", "High Contrast", "Blue Dark", "Green Dark", "Purple Dark");
         themeComboBox.setValue("Dark");
-        themeComboBox.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        themeComboBox.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
         themeComboBox.setTooltip(createTooltip("Change the application color theme"));
 
         themeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -3163,12 +3165,12 @@ public class AntiCheatingIDE extends Application {
 
         Spinner<Integer> fontSizeSpinner = new Spinner<>(8, 24, 14);
         fontSizeSpinner.setEditable(true);
-        fontSizeSpinner.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        fontSizeSpinner.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         ComboBox<String> fontFamilyCombo = new ComboBox<>();
         fontFamilyCombo.getItems().addAll("Monospace", "Consolas", "Courier New", "Source Code Pro");
         fontFamilyCombo.setValue("Monospace");
-        fontFamilyCombo.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        fontFamilyCombo.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         fontControls.getChildren().addAll(
                 new Label("Size:"), fontSizeSpinner,
@@ -3317,7 +3319,7 @@ public class AntiCheatingIDE extends Application {
         ComboBox<String> presetComboBox = new ComboBox<>();
         presetComboBox.getItems().addAll("Balanced", "High Performance", "Battery Saver", "Custom");
         presetComboBox.setValue("Balanced");
-        presetComboBox.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        presetComboBox.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         presetBox.getChildren().addAll(presetLabel, presetComboBox);
 
@@ -3408,7 +3410,7 @@ public class AntiCheatingIDE extends Application {
         ChoiceBox<String> syntaxTheme = new ChoiceBox<>();
         syntaxTheme.getItems().addAll("Dark", "Light", "Monokai", "Solarized", "Dracula");
         syntaxTheme.setValue("Dark");
-        syntaxTheme.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        syntaxTheme.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         syntaxOptions.getChildren().add(syntaxTheme);
         syntaxBox.getChildren().addAll(syntaxLabel, syntaxOptions);
@@ -3484,7 +3486,7 @@ public class AntiCheatingIDE extends Application {
         ChoiceBox<String> themeChoice = new ChoiceBox<>();
         themeChoice.getItems().addAll("Dark", "Light", "High Contrast", "Blue", "Green", "Purple");
         themeChoice.setValue("Dark");
-        themeChoice.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-pref-width: 150;");
+        themeChoice.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-pref-width: 150;");
 
         // Theme preview
         Button previewThemeBtn = new Button("Preview");
@@ -3508,11 +3510,11 @@ public class AntiCheatingIDE extends Application {
         ChoiceBox<String> fontFamily = new ChoiceBox<>();
         fontFamily.getItems().addAll("Monospaced", "Consolas", "Source Code Pro", "Fira Code", "JetBrains Mono");
         fontFamily.setValue("Monospaced");
-        fontFamily.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        fontFamily.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         Spinner<Integer> fontSize = new Spinner<>(8, 24, 12);
         fontSize.setEditable(true);
-        fontSize.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        fontSize.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         fontSettings.getChildren().addAll(
                 new Label("Family:"), fontFamily,
@@ -3611,7 +3613,7 @@ public class AntiCheatingIDE extends Application {
         ChoiceBox<String> alertLevel = new ChoiceBox<>();
         alertLevel.getItems().addAll("Low", "Medium", "High", "Very High");
         alertLevel.setValue("Medium");
-        alertLevel.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+        alertLevel.setStyle("-fx-background-color: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
         CheckBox soundAlertsCheck = new CheckBox("Enable sound alerts");
         soundAlertsCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
@@ -4134,8 +4136,8 @@ public class AntiCheatingIDE extends Application {
         consoleOutput.setStyle("-fx-control-inner-background: #1a1b26; -fx-text-fill: " + GREEN_SUCCESS + "; -fx-font-family: 'Consolas', 'Monaco', monospace;");
         consoleOutput.setEditable(false);
 
-        inputDataArea.setStyle("-fx-control-inner-background: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-font-size: 12px;");
-        expectedOutputArea.setStyle("-fx-control-inner-background: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-font-size: 12px;");
+        inputDataArea.setStyle("-fx-control-inner-background: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-font-size: 12px;");
+        expectedOutputArea.setStyle("-fx-control-inner-background: " + SET_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-font-size: 12px;");
         focusLogArea.setStyle("-fx-control-inner-background: #1a1a2e; -fx-text-fill: " + BLUE_INFO + "; -fx-font-size: 11px;");
         focusLogArea.setEditable(false);
 
@@ -4174,7 +4176,7 @@ public class AntiCheatingIDE extends Application {
 
     private Button createControlButton(String text, String color, Runnable action) {
         Button button = new Button(text);
-        button.setStyle("-fx-background-color: transparent; " +
+        button.setStyle("-fx-background-color: #ccc; " +
                 "-fx-text-fill: " + color + "; " +
                 "-fx-font-size: 14px; " +
                 "-fx-font-weight: bold; " +
