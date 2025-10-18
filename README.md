@@ -170,7 +170,7 @@ Debug session frequency
 Code similarity scores
 
 📁 Project Structure
-![image alt]('https://github.com/Tauhid-Topu-007/Secure-coding-assessment/blob/main/ide.png')
+![image alt](https://github.com/Tauhid-Topu-007/Secure-coding-assessment/blob/main/ide.png)
 🏗️ Architecture
 Key Components
 UI Layer: JavaFX-based interface with custom controls
