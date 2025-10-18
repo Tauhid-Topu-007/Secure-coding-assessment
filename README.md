@@ -1,104 +1,105 @@
-Secure Coding Assessment IDE
-A comprehensive, anti-cheating integrated development environment designed for secure coding assessments and programming exams. This IDE provides real-time monitoring and cheating detection while offering a full-featured coding environment.
+# 🧠 Secure Coding Assessment IDE
 
-🚀 Features
-🛡️ Anti-Cheating & Security
-Real-time Monitoring: Continuous surveillance of user activity
+A **comprehensive, anti-cheating integrated development environment** designed for secure coding assessments and programming exams.  
+This IDE provides **real-time monitoring**, **activity analytics**, and **AI-based cheating detection** — while offering a smooth, full-featured coding experience.
 
-Focus Detection: Monitors window focus loss and tab switching
+---
 
-Copy/Paste Monitoring: Tracks all copy, cut, and paste operations
+## 🚀 Features
 
-Keystroke Analysis: Detects rapid typing patterns and suspicious input
+### 🛡️ Anti-Cheating & Security
+- **Real-time Monitoring:** Continuous surveillance of user activity  
+- **Focus Detection:** Tracks window focus loss and tab switching  
+- **Copy/Paste Monitoring:** Logs copy, cut, and paste operations  
+- **Keystroke Analysis:** Detects rapid or irregular typing patterns  
+- **Screenshot Prevention:** Detects and logs screenshot attempts  
+- **Activity Logging:** Comprehensive event logging with severity scoring  
+- **AI Pattern Detection:** Flags AI-generated or copied code  
 
-Screenshot Prevention: Monitors screenshot attempts
+---
 
-Activity Logging: Comprehensive event logging with severity scoring
+### 💻 Development Features
+- **Multi-language Support:** Java, Python, C++, JavaScript  
+- **Interactive Console:** Real-time program execution with input/output  
+- **Code Completion:** Intelligent code suggestions  
+- **Syntax Highlighting:** Language-specific syntax coloring  
+- **Auto-Formatting:** Clean code formatting and indentation  
+- **Debug Tools:** Integrated runtime debugging and error tracking  
+- **File Management:** Create, save, open, and manage multiple files  
 
-AI Pattern Detection: Analyzes code for AI-generated patterns
+---
 
-💻 Development Features
-Multi-language Support: Java, Python, C++, JavaScript
+### 📊 Monitoring & Analytics
+- **Instructor Dashboard:** Real-time monitoring of all sessions  
+- **Suspicion Scoring:** Dynamic risk assessment system  
+- **Code Analysis:** Complexity, similarity, and AI pattern checks  
+- **Session Statistics:** Detailed logs and metrics per student  
+- **Export Reports:** Generate comprehensive session reports  
 
-Interactive Console: Real-time program execution with input/output handling
+---
 
-Code Completion: Intelligent code suggestions
+### ⚙️ Customization
+- **Theme Support:** Dark, Light, and High-Contrast modes  
+- **Font Customization:** Adjustable font family and size  
+- **Auto-save:** Configurable automatic saving intervals  
+- **Settings Profiles:** Save and load configuration presets  
 
-Syntax Highlighting: Language-specific syntax coloring
+---
 
-Auto-Formatting: Code formatting and indentation
+## 🛠️ Installation
 
-Debug Tools: Built-in debugging and analysis
+### Prerequisites
+- **Java 17** or higher  
+- **JavaFX 17** or higher  
 
-File Management: Create, save, and manage multiple files
+---
 
-📊 Monitoring & Analytics
-Instructor Dashboard: Real-time monitoring interface
+### Build & Run
 
-Suspicion Scoring: Dynamic risk assessment algorithm
-
-Code Analysis: Complexity, similarity, and pattern analysis
-
-Session Statistics: Comprehensive activity metrics
-
-Export Reports: Detailed session reports
-
-⚙️ Customization
-Theme Support: Multiple color themes (Dark, Light, High Contrast, etc.)
-
-Font Customization: Adjustable font family and size
-
-Auto-save: Configurable automatic saving
-
-Settings Profiles: Save and load configuration profiles
-
-🛠️ Installation
-Prerequisites
-Java 17 or higher
-
-JavaFX 17 or higher
-
-Build & Run
-Clone the repository
-
-bash
-git clone https://github.com/Tauhid-Topu-007/Secure-coding-assessment.git
-cd secure-coding-ide
-Compile the project
+**Clone the repository:**
+```bash
+git clone https://github.com/Tauhid-Topu-007/secure-coding-assessment.git
+cd secure-coding-assessment
+Compile the project:
 
 bash
+Copy code
 javac --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml org/example/ide/AntiCheatingIDE.java
-Run the application
+Run the application:
 
 bash
+Copy code
 java --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml org.example.ide.AntiCheatingIDE
-IDE Setup (IntelliJ/Eclipse)
-Ensure JavaFX is properly configured in your IDE
+IDE Setup (IntelliJ / Eclipse)
+Add JavaFX libraries to your project’s module path
 
-Add JavaFX libraries to your project module path
+Set VM options:
 
-Set VM options: --module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml
+css
+Copy code
+--module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml
+Run the AntiCheatingIDE class.
 
 📖 Usage
 For Students
-Start Session: Launch the IDE to begin monitored coding session
+Start Session: Launch the IDE for your coding test
 
-Create Files: Use the sidebar to create new files with appropriate extensions
+Create Files: Use the file toolbar to make new code files
 
-Write Code: Use the code editor with syntax highlighting and auto-completion
+Write Code: Type in the code editor with syntax highlighting
 
-Test Code: Use the interactive console to run and test programs
+Test Code: Run with input/output simulation
 
-Submit: Use the submit button when finished
+Submit: Use the Submit button when done
 
 For Instructors
-Monitor Dashboard: Watch real-time activity in the instructor panel
+Monitor Dashboard: Track real-time student activity
 
-Review Suspicion Scores: Track risk levels and suspicious activities
+Review Suspicion Scores: Identify high-risk behavior
 
-Analyze Code: Review code patterns and AI detection results
+Analyze Code: Detect AI or copied solutions
 
-Export Reports: Generate comprehensive session reports
+Export Reports: Generate detailed performance and behavior logs
 
 🔧 Configuration
 Settings Categories
@@ -107,29 +108,23 @@ Auto-save intervals
 
 Session management
 
-Console preferences
+Console behavior
 
-Performance settings
+Performance tuning
 
 Editor Settings
 Syntax highlighting themes
 
-Line numbers
+Line numbers and word wrap
 
-Word wrap
-
-Code completion
-
-Auto-indentation
+Code completion and indentation
 
 Appearance Settings
 Color themes
 
 Font family and size
 
-UI scaling
-
-Layout preferences
+UI scaling and layout preferences
 
 Security Settings
 Monitoring sensitivity
@@ -138,147 +133,149 @@ Alert levels
 
 Privacy controls
 
-Report generation
+Report generation rules
 
 🎯 Anti-Cheating Features
 Detection Methods
-Focus Monitoring: Detects window switching and minimization
+Focus Monitoring: Detects window/tab switching
 
-Input Monitoring: Tracks copy/paste and keyboard shortcuts
+Input Monitoring: Tracks copy/paste and shortcuts
 
-Pattern Analysis: Identifies AI-generated code patterns
+Pattern Analysis: AI and plagiarism pattern detection
 
-Behavior Analysis: Monitors typing speed and activity patterns
+Behavior Analysis: Keystroke and typing rhythm tracking
 
-System Monitoring: Detects screenshot attempts and system commands
+System Monitoring: Detects screenshots and system commands
 
 Suspicion Scoring
-The system calculates a dynamic suspicion score based on:
+Dynamic score based on:
 
-Focus loss events
+Focus loss frequency
 
 Copy/paste operations
 
-Window minimizes
+Window minimization
 
-Tab switches
+Tab switching
 
-Rapid typing patterns
+Typing irregularities
 
 Debug session frequency
 
-Code similarity scores
+Code similarity and AI match
 
 📁 Project Structure
-![image alt](https://github.com/Tauhid-Topu-007/Secure-coding-assessment/blob/main/ide.png)
+![image alt]()
 🏗️ Architecture
 Key Components
-UI Layer: JavaFX-based interface with custom controls
-
-Monitoring Engine: Real-time activity tracking and analysis
-
-Code Analysis: Pattern recognition and similarity detection
-
-Security Module: Cheating detection and prevention
-
-File Management: Project and file handling system
+Component	Description
+UI Layer	JavaFX-based interface and visual elements
+Monitoring Engine	Real-time tracking of user behavior
+Code Analysis	Pattern recognition and similarity detection
+Security Module	Anti-cheating and AI pattern validation
+File Management	Handles file creation, saving, and loading
 
 Data Models
-FileEntry: Represents code files and their content
+FileEntry – represents code files
 
-CheatingEvent: Logs suspicious activities
+CheatingEvent – logs suspicious user activity
 
-CodeAnalysisResult: Stores code analysis metrics
+CodeAnalysisResult – stores analysis metrics
 
-SampleTestCase: Manages test cases and expected outputs
+SampleTestCase – represents problem test cases
 
 🔒 Security Considerations
 Privacy
 All monitoring is transparent to the user
 
-Activity logs are stored locally during session
+Logs are stored locally during sessions
 
 No external data transmission without consent
 
 Integrity
-Full-screen enforcement prevents external application access
+Full-screen enforcement prevents external app access
 
-Copy/paste restrictions maintain assessment integrity
+Copy/paste restrictions maintain exam integrity
 
-Real-time validation of code authenticity
+Real-time validation ensures code authenticity
 
 📊 Performance
 System Requirements
-Minimum: 4GB RAM, Dual-core processor
-
-Recommended: 8GB RAM, Quad-core processor
-
-Storage: 500MB free space
+Type	Specification
+Minimum	4GB RAM, Dual-core CPU
+Recommended	8GB RAM, Quad-core CPU
+Storage	500MB free space
 
 Optimization
-Efficient memory management for large codebases
+Efficient memory management
 
-Background monitoring with minimal performance impact
+Lightweight background monitoring
 
-Optimized UI rendering for smooth experience
+Smooth JavaFX rendering
 
 🐛 Troubleshooting
 Common Issues
-JavaFX Not Found
+❌ JavaFX Not Found
 
-text
+javascript
+Copy code
 Error: JavaFX runtime components are missing
-Solution: Ensure JavaFX is properly installed and added to module path.
+✅ Solution: Ensure JavaFX is installed and added to your module path.
 
-Fullscreen Issues
+⚠️ Fullscreen Issues
 
-text
+css
+Copy code
 Unable to enter fullscreen mode
-Solution: Check system permissions and display settings.
+✅ Solution: Check system permissions and display settings.
 
-Performance Problems
+🐢 Performance Problems
 
-text
+nginx
+Copy code
 Slow response or lagging
-Solution: Close other applications, increase heap size with -Xmx2g
+✅ Solution: Close other apps or increase heap size:
 
+diff
+Copy code
+-Xmx2g
 Logs and Debugging
-Console output shows real-time application status
+Real-time status messages appear in console
 
-Activity logs are available in the instructor dashboard
+Activity logs stored in the instructor dashboard
 
-Session reports provide detailed debugging information
+Session reports available after submission
 
 🤝 Contributing
-We welcome contributions! Please see our Contributing Guidelines for details.
+We welcome contributions!
+Please read our Contributing Guidelines before submitting PRs.
 
-Development Setup
+Development Workflow
+
 Fork the repository
 
 Create a feature branch
 
-Make your changes
-
-Add tests for new functionality
+Implement and test your changes
 
 Submit a pull request
 
 📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
+See the LICENSE file for full details.
 
 🙏 Acknowledgments
-JavaFX team for the robust UI framework
+JavaFX Team — for the powerful UI framework
 
-Open-source community for inspiration and libraries
+Open Source Community — for libraries and inspiration
 
-Educational institutions for testing and feedback
+Educational Institutions — for feedback during testing
 
 📞 Support
-For support and questions:
+If you need help or have questions:
 
-Create an issue on GitHub
+Open an issue on GitHub
 
 Check the documentation
 
 Contact the development team
-
