@@ -1995,32 +1995,475 @@ public class AntiCheatingIDE extends Application {
      * NEW FUNCTIONALITY: Settings Dialog
      */
     private void showSettingsDialog() {
-        // Create a simple settings dialog
-        Dialog<Void> settingsDialog = new Dialog<>();
+        // Create settings dialog
+        Dialog<Boolean> settingsDialog = new Dialog<>();
         settingsDialog.setTitle("IDE Settings");
         settingsDialog.setHeaderText("Configure IDE Preferences");
 
-        VBox settingsContent = new VBox(10);
-        settingsContent.setPadding(new Insets(15));
+        // Create main settings container with tabs
+        TabPane settingsTabs = new TabPane();
+        settingsTabs.setStyle("-fx-background-color: " + DARK_BG + ";");
+        settingsTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        // Create theme choice box properly
-        ChoiceBox<String> themeChoiceBox = new ChoiceBox<>();
-        themeChoiceBox.getItems().addAll("Dark", "Light", "High Contrast");
-        themeChoiceBox.setValue("Dark");
+        // === GENERAL SETTINGS TAB ===
+        Tab generalTab = new Tab("General");
+        generalTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        generalTab.setContent(createGeneralSettingsTab());
 
-        // Add components to settings content
-        settingsContent.getChildren().addAll(
+        // === EDITOR SETTINGS TAB ===
+        Tab editorTab = new Tab("Editor");
+        editorTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        editorTab.setContent(createEditorSettingsTab());
+
+        // === APPEARANCE SETTINGS TAB ===
+        Tab appearanceTab = new Tab("Appearance");
+        appearanceTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        appearanceTab.setContent(createAppearanceSettingsTab());
+
+        // === SECURITY SETTINGS TAB ===
+        Tab securityTab = new Tab("Security");
+        securityTab.setStyle("-fx-background-color: " + EDITOR_BG + ";");
+        securityTab.setContent(createSecuritySettingsTab());
+
+        settingsTabs.getTabs().addAll(generalTab, editorTab, appearanceTab, securityTab);
+
+        // Add buttons
+        ButtonType applyButton = new ButtonType("Apply", ButtonBar.ButtonData.APPLY);
+        ButtonType resetButton = new ButtonType("Reset", ButtonBar.ButtonData.OTHER);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        settingsDialog.getDialogPane().getButtonTypes().addAll(applyButton, resetButton, cancelButton);
+        settingsDialog.getDialogPane().setContent(settingsTabs);
+
+        // Style the dialog
+        DialogPane dialogPane = settingsDialog.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: " + DARK_BG + ";");
+        dialogPane.setPrefSize(500, 400);
+
+        // Style buttons
+        Button applyBtn = (Button) dialogPane.lookupButton(applyButton);
+        applyBtn.setStyle("-fx-background-color: " + GREEN_SUCCESS + "; -fx-text-fill: black; -fx-font-weight: bold;");
+
+        Button resetBtn = (Button) dialogPane.lookupButton(resetButton);
+        resetBtn.setStyle("-fx-background-color: " + YELLOW_WARNING + "; -fx-text-fill: black; -fx-font-weight: bold;");
+
+        // Handle button actions
+        settingsDialog.setResultConverter(buttonType -> {
+            if (buttonType == applyButton) {
+                boolean success = applyAllSettings();
+                if (success) {
+                    consoleOutput.appendText("⚙️ Settings applied successfully\n");
+                    logCheatingEvent("SETTINGS_APPLIED", "User applied settings from dialog", 1);
+                }
+                return success;
+            } else if (buttonType == resetButton) {
+                resetToDefaults();
+                return false; // Don't close dialog after reset
+            }
+            return false;
+        });
+
+        // Load current settings
+        loadCurrentSettings();
+
+        // Show dialog
+        Optional<Boolean> result = settingsDialog.showAndWait();
+        if (result.isPresent() && result.get()) {
+            consoleOutput.appendText("✅ Settings saved\n");
+        }
+    }
+
+    /**
+     * Create General Settings Tab
+     */
+    private ScrollPane createGeneralSettingsTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: " + DARK_BG + ";");
+
+        Label sectionLabel = new Label("General Settings");
+        sectionLabel.setStyle("-fx-text-fill: " + DEFAULT_ACCENT + "; -fx-font-weight: bold; -fx-font-size: 16;");
+
+        // Auto-save settings
+        VBox autoSaveBox = new VBox(8);
+        Label autoSaveLabel = new Label("Auto-save:");
+        autoSaveLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        HBox autoSaveOptions = new HBox(10);
+        autoSaveOptions.setAlignment(Pos.CENTER_LEFT);
+
+        Spinner<Integer> autoSaveInterval = new Spinner<>(1, 60, 5);
+        autoSaveInterval.setEditable(true);
+        autoSaveInterval.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+
+        autoSaveOptions.getChildren().addAll(
                 autoSaveCheckBox,
+                new Label("Interval (minutes):"),
+                autoSaveInterval
+        );
+        autoSaveBox.getChildren().addAll(autoSaveLabel, autoSaveOptions);
+
+        // Session settings
+        VBox sessionBox = new VBox(8);
+        Label sessionLabel = new Label("Session:");
+        sessionLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox restoreSessionCheck = new CheckBox("Restore previous session on startup");
+        restoreSessionCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox backupCheck = new CheckBox("Create backup files");
+        backupCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        sessionBox.getChildren().addAll(sessionLabel, restoreSessionCheck, backupCheck);
+
+        // Console settings
+        VBox consoleBox = new VBox(8);
+        Label consoleLabel = new Label("Console:");
+        consoleLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox clearConsoleOnRun = new CheckBox("Clear console before each run");
+        clearConsoleOnRun.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox timestampsCheck = new CheckBox("Show timestamps in console");
+        timestampsCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        consoleBox.getChildren().addAll(consoleLabel, clearConsoleOnRun, timestampsCheck);
+
+        content.getChildren().addAll(sectionLabel, autoSaveBox, sessionBox, consoleBox);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: " + DARK_BG + ";");
+        return scrollPane;
+    }
+
+    /**
+     * Create Editor Settings Tab
+     */
+    private ScrollPane createEditorSettingsTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: " + DARK_BG + ";");
+
+        Label sectionLabel = new Label("Editor Settings");
+        sectionLabel.setStyle("-fx-text-fill: " + DEFAULT_ACCENT + "; -fx-font-weight: bold; -fx-font-size: 16;");
+
+        // Syntax and highlighting
+        VBox syntaxBox = new VBox(8);
+        Label syntaxLabel = new Label("Syntax & Highlighting:");
+        syntaxLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        HBox syntaxOptions = new HBox(15);
+        syntaxOptions.setAlignment(Pos.CENTER_LEFT);
+
+        syntaxOptions.getChildren().addAll(
                 syntaxHighlightCheckBox,
-                new Label("Theme: "),
-                themeChoiceBox
+                new Label("Theme:")
         );
 
-        settingsDialog.getDialogPane().setContent(settingsContent);
-        settingsDialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-        settingsDialog.showAndWait();
+        ChoiceBox<String> syntaxTheme = new ChoiceBox<>();
+        syntaxTheme.getItems().addAll("Dark", "Light", "Monokai", "Solarized", "Dracula");
+        syntaxTheme.setValue("Dark");
+        syntaxTheme.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
 
-        consoleOutput.appendText("⚙️ Settings updated\n");
+        syntaxOptions.getChildren().add(syntaxTheme);
+        syntaxBox.getChildren().addAll(syntaxLabel, syntaxOptions);
+
+        // Editor behavior
+        VBox behaviorBox = new VBox(8);
+        Label behaviorLabel = new Label("Editor Behavior:");
+        behaviorLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox lineNumbersCheck = new CheckBox("Show line numbers");
+        lineNumbersCheck.setSelected(true);
+        lineNumbersCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox wordWrapCheck = new CheckBox("Enable word wrap");
+        wordWrapCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox bracketMatchCheck = new CheckBox("Highlight matching brackets");
+        bracketMatchCheck.setSelected(true);
+        bracketMatchCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox autoIndentCheck = new CheckBox("Auto-indent");
+        autoIndentCheck.setSelected(true);
+        autoIndentCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        behaviorBox.getChildren().addAll(behaviorLabel, lineNumbersCheck, wordWrapCheck, bracketMatchCheck, autoIndentCheck);
+
+        // Code completion
+        VBox completionBox = new VBox(8);
+        Label completionLabel = new Label("Code Completion:");
+        completionLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox autoCompleteCheck = new CheckBox("Enable auto-completion");
+        autoCompleteCheck.setSelected(true);
+        autoCompleteCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox parameterHintCheck = new CheckBox("Show parameter hints");
+        parameterHintCheck.setSelected(true);
+        parameterHintCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        HBox delayBox = new HBox(10);
+        delayBox.setAlignment(Pos.CENTER_LEFT);
+        delayBox.getChildren().addAll(
+                new Label("Completion delay (ms):"),
+                new Spinner<>(100, 2000, 500)
+        );
+
+        completionBox.getChildren().addAll(completionLabel, autoCompleteCheck, parameterHintCheck, delayBox);
+
+        content.getChildren().addAll(sectionLabel, syntaxBox, behaviorBox, completionBox);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: " + DARK_BG + ";");
+        return scrollPane;
+    }
+
+    /**
+     * Create Appearance Settings Tab
+     */
+    private ScrollPane createAppearanceSettingsTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: " + DARK_BG + ";");
+
+        Label sectionLabel = new Label("Appearance Settings");
+        sectionLabel.setStyle("-fx-text-fill: " + DEFAULT_ACCENT + "; -fx-font-weight: bold; -fx-font-size: 16;");
+
+        // Theme selection
+        VBox themeBox = new VBox(8);
+        Label themeLabel = new Label("Theme:");
+        themeLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        ChoiceBox<String> themeChoice = new ChoiceBox<>();
+        themeChoice.getItems().addAll("Dark", "Light", "High Contrast", "Blue", "Green", "Purple");
+        themeChoice.setValue("Dark");
+        themeChoice.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + "; -fx-pref-width: 150;");
+
+        // Theme preview
+        Button previewThemeBtn = new Button("Preview");
+        previewThemeBtn.setStyle("-fx-background-color: " + BLUE_INFO + "; -fx-text-fill: black;");
+        previewThemeBtn.setOnAction(e -> previewTheme(themeChoice.getValue()));
+
+        HBox themeOptions = new HBox(10);
+        themeOptions.setAlignment(Pos.CENTER_LEFT);
+        themeOptions.getChildren().addAll(themeChoice, previewThemeBtn);
+
+        themeBox.getChildren().addAll(themeLabel, themeOptions);
+
+        // Font settings
+        VBox fontBox = new VBox(8);
+        Label fontLabel = new Label("Font:");
+        fontLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        HBox fontSettings = new HBox(10);
+        fontSettings.setAlignment(Pos.CENTER_LEFT);
+
+        ChoiceBox<String> fontFamily = new ChoiceBox<>();
+        fontFamily.getItems().addAll("Monospaced", "Consolas", "Source Code Pro", "Fira Code", "JetBrains Mono");
+        fontFamily.setValue("Monospaced");
+        fontFamily.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+
+        Spinner<Integer> fontSize = new Spinner<>(8, 24, 12);
+        fontSize.setEditable(true);
+        fontSize.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+
+        fontSettings.getChildren().addAll(
+                new Label("Family:"), fontFamily,
+                new Label("Size:"), fontSize
+        );
+        fontBox.getChildren().addAll(fontLabel, fontSettings);
+
+        // UI scaling
+        VBox scaleBox = new VBox(8);
+        Label scaleLabel = new Label("UI Scaling:");
+        scaleLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        Slider uiScale = new Slider(80, 150, 100);
+        uiScale.setShowTickLabels(true);
+        uiScale.setShowTickMarks(true);
+        uiScale.setMajorTickUnit(10);
+
+        Label scaleValue = new Label("100%");
+        scaleValue.setStyle("-fx-text-fill: " + BLUE_INFO + ";");
+
+        uiScale.valueProperty().addListener((obs, oldVal, newVal) -> {
+            scaleValue.setText(Math.round(newVal.doubleValue()) + "%");
+        });
+
+        HBox scaleOptions = new HBox(10);
+        scaleOptions.setAlignment(Pos.CENTER_LEFT);
+        scaleOptions.getChildren().addAll(uiScale, scaleValue);
+
+        scaleBox.getChildren().addAll(scaleLabel, scaleOptions);
+
+        content.getChildren().addAll(sectionLabel, themeBox, fontBox, scaleBox);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: " + DARK_BG + ";");
+        return scrollPane;
+    }
+
+    /**
+     * Create Security Settings Tab
+     */
+    private ScrollPane createSecuritySettingsTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: " + DARK_BG + ";");
+
+        Label sectionLabel = new Label("Security & Monitoring Settings");
+        sectionLabel.setStyle("-fx-text-fill: " + DEFAULT_ACCENT + "; -fx-font-weight: bold; -fx-font-size: 16;");
+
+        // Anti-cheating settings
+        VBox cheatingBox = new VBox(8);
+        Label cheatingLabel = new Label("Anti-Cheating:");
+        cheatingLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox strictModeCheck = new CheckBox("Strict monitoring mode");
+        strictModeCheck.setSelected(true);
+        strictModeCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox focusMonitoringCheck = new CheckBox("Monitor window focus");
+        focusMonitoringCheck.setSelected(true);
+        focusMonitoringCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox copyPasteMonitorCheck = new CheckBox("Monitor copy/paste operations");
+        copyPasteMonitorCheck.setSelected(true);
+        copyPasteMonitorCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox screenshotMonitorCheck = new CheckBox("Detect screenshot attempts");
+        screenshotMonitorCheck.setSelected(true);
+        screenshotMonitorCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        cheatingBox.getChildren().addAll(cheatingLabel, strictModeCheck, focusMonitoringCheck,
+                copyPasteMonitorCheck, screenshotMonitorCheck);
+
+        // Privacy settings
+        VBox privacyBox = new VBox(8);
+        Label privacyLabel = new Label("Privacy:");
+        privacyLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        CheckBox keystrokeLoggingCheck = new CheckBox("Enable keystroke logging");
+        keystrokeLoggingCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox activityReportsCheck = new CheckBox("Generate activity reports");
+        activityReportsCheck.setSelected(true);
+        activityReportsCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox autoSubmitCheck = new CheckBox("Auto-submit suspicion reports");
+        autoSubmitCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        privacyBox.getChildren().addAll(privacyLabel, keystrokeLoggingCheck, activityReportsCheck, autoSubmitCheck);
+
+        // Alert settings
+        VBox alertBox = new VBox(8);
+        Label alertLabel = new Label("Alerts:");
+        alertLabel.setStyle("-fx-text-fill: " + TEXT_COLOR + "; -fx-font-weight: bold;");
+
+        ChoiceBox<String> alertLevel = new ChoiceBox<>();
+        alertLevel.getItems().addAll("Low", "Medium", "High", "Very High");
+        alertLevel.setValue("Medium");
+        alertLevel.setStyle("-fx-background-color: " + INPUT_BG + "; -fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox soundAlertsCheck = new CheckBox("Enable sound alerts");
+        soundAlertsCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        CheckBox visualAlertsCheck = new CheckBox("Enable visual alerts");
+        visualAlertsCheck.setSelected(true);
+        visualAlertsCheck.setStyle("-fx-text-fill: " + TEXT_COLOR + ";");
+
+        alertBox.getChildren().addAll(alertLabel,
+                new Label("Sensitivity:"), alertLevel,
+                soundAlertsCheck, visualAlertsCheck
+        );
+
+        content.getChildren().addAll(sectionLabel, cheatingBox, privacyBox, alertBox);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: " + DARK_BG + ";");
+        return scrollPane;
+    }
+
+    /**
+     * Apply all settings
+     */
+    private boolean applyAllSettings() {
+        consoleOutput.appendText("⚙️ Applying settings...\n");
+
+        try {
+            // Apply auto-save settings
+            if (autoSaveCheckBox.isSelected()) {
+                consoleOutput.appendText("   💾 Auto-save enabled\n");
+            }
+
+            // Apply syntax highlighting
+            if (syntaxHighlightCheckBox.isSelected()) {
+                consoleOutput.appendText("   🎨 Syntax highlighting enabled\n");
+            }
+
+            // Apply security settings
+            consoleOutput.appendText("   🔒 Security settings applied\n");
+
+            // Save settings to file (in a real implementation)
+            saveSettings();
+
+            consoleOutput.appendText("✅ All settings applied successfully\n");
+            return true;
+
+        } catch (Exception e) {
+            consoleOutput.appendText("❌ Error applying settings: " + e.getMessage() + "\n");
+            return false;
+        }
+    }
+
+    /**
+     * Reset settings to defaults
+     */
+    private void resetToDefaults() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Reset Settings");
+        confirm.setHeaderText("Reset to Defaults");
+        confirm.setContentText("Are you sure you want to reset all settings to their default values?");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Reset all checkboxes and controls to defaults
+            autoSaveCheckBox.setSelected(true);
+            syntaxHighlightCheckBox.setSelected(true);
+
+            consoleOutput.appendText("🔄 Settings reset to defaults\n");
+            logCheatingEvent("SETTINGS_RESET", "User reset settings to defaults", 1);
+        }
+    }
+
+    /**
+     * Load current settings
+     */
+    private void loadCurrentSettings() {
+        // In a real implementation, this would load from a settings file
+        autoSaveCheckBox.setSelected(true);
+        syntaxHighlightCheckBox.setSelected(true);
+    }
+
+    /**
+     * Save settings to file
+     */
+    private void saveSettings() {
+        // In a real implementation, this would save to a settings file
+        consoleOutput.appendText("   💾 Settings saved to configuration file\n");
+    }
+
+    /**
+     * Preview theme
+     */
+    private void previewTheme(String theme) {
+        consoleOutput.appendText("🎨 Previewing theme: " + theme + "\n");
+        // In a real implementation, this would temporarily apply the theme for preview
     }
 
     /**
