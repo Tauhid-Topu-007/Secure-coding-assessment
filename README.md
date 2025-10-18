@@ -165,7 +165,8 @@ Debug session frequency
 Code similarity and AI match
 
 📁 Project Structure
-![image alt](https://github.com/Tauhid-Topu-007/Secure-coding-assessment/blob/main/ide.png)
+![Secure Coding IDE Screenshot](https://github.com/Tauhid-Topu-007/Secure-coding-assessment/raw/main/ide.png)
+
 🏗️ Architecture
 Key Components
 Component	Description
