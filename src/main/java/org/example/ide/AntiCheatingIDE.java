@@ -703,60 +703,393 @@ public class AntiCheatingIDE extends Application {
         logCheatingEvent("AI_CHECK", "User requested AI pattern analysis", 1);
         consoleOutput.appendText("🤖 Analyzing code for AI-generated patterns...\n");
 
-        String code = codeEditor.getText();
-        double aiProbability = analyzeForAIPatterns(code);
+        if (codeEditor.getText().trim().isEmpty()) {
+            consoleOutput.appendText("❌ No code to analyze\n");
+            return;
+        }
 
-        if (aiProbability > 0.7) {
-            consoleOutput.appendText("⚠️  High probability of AI-generated code detected: " +
-                    String.format("%.1f%%", aiProbability * 100) + "\n");
-            logCheatingEvent("AI_SUSPICION", "Possible AI-generated code detected", 6);
+        String code = codeEditor.getText();
+        AIAnalysisResult result = analyzeForAIPatterns(code);
+
+        // Display detailed analysis
+        displayAIAnalysisResults(result);
+
+        // Log appropriate event based on risk level
+        if (result.getOverallProbability() > 0.8) {
+            logCheatingEvent("HIGH_AI_SUSPICION",
+                    "High probability AI-generated code detected: " +
+                            String.format("%.1f%%", result.getOverallProbability() * 100), 8);
+        } else if (result.getOverallProbability() > 0.6) {
+            logCheatingEvent("MEDIUM_AI_SUSPICION",
+                    "Medium probability AI-generated code detected: " +
+                            String.format("%.1f%%", result.getOverallProbability() * 100), 6);
         } else {
-            consoleOutput.appendText("✅ Code appears to be human-written: " +
-                    String.format("%.1f%%", (1 - aiProbability) * 100) + " confidence\n");
+            logCheatingEvent("LOW_AI_SUSPICION",
+                    "Low probability AI-generated code: " +
+                            String.format("%.1f%%", result.getOverallProbability() * 100), 3);
         }
     }
 
-    private double analyzeForAIPatterns(String code) {
-        // Simple AI pattern detection
-        int aiIndicators = 0;
-        int totalChecks = 5;
+    /**
+     * Comprehensive AI pattern analysis with detailed scoring
+     */
+    private AIAnalysisResult analyzeForAIPatterns(String code) {
+        AIAnalysisResult result = new AIAnalysisResult();
 
-        // Check for overly consistent formatting
-        if (code.split("\n").length > 10) {
-            String[] lines = code.split("\n");
-            int consistentIndent = 0;
-            for (String line : lines) {
-                if (line.matches("^\\s{4}\\S.*") || line.trim().isEmpty()) {
-                    consistentIndent++;
+        // Basic code metrics
+        result.setTotalLines(code.split("\n").length);
+        result.setTotalCharacters(code.length());
+
+        // Analyze different aspects
+        analyzeFormattingPatterns(code, result);
+        analyzeStructuralPatterns(code, result);
+        analyzeContentPatterns(code, result);
+        analyzeComplexityPatterns(code, result);
+        analyzeLanguageSpecificPatterns(code, result);
+
+        // Calculate overall probability
+        result.calculateOverallProbability();
+
+        return result;
+    }
+
+    /**
+     * Analyze formatting and stylistic patterns
+     */
+    private void analyzeFormattingPatterns(String code, AIAnalysisResult result) {
+        String[] lines = code.split("\n");
+        if (lines.length < 5) {
+            result.addIndicator("SHORT_CODE", "Code is very short", 0.1);
+            return;
+        }
+
+        int perfectIndentation = 0;
+        int consistentSpacing = 0;
+        int templateComments = 0;
+
+        for (String line : lines) {
+            // Check for perfect indentation (4 spaces exactly)
+            if (line.matches("^\\s{4}\\S.*")) {
+                perfectIndentation++;
+            }
+
+            // Check for consistent operator spacing
+            if (line.matches(".*\\w\\s*=\\s*\\w.*") || line.matches(".*\\w\\s*\\+\\s*\\w.*")) {
+                consistentSpacing++;
+            }
+
+            // Check for template-style comments
+            if (line.trim().startsWith("//") &&
+                    (line.toLowerCase().contains("todo") ||
+                            line.toLowerCase().contains("note") ||
+                            line.toLowerCase().contains("implementation"))) {
+                templateComments++;
+            }
+        }
+
+        double indentationScore = (double) perfectIndentation / lines.length;
+        if (indentationScore > 0.9) {
+            result.addIndicator("PERFECT_INDENTATION", "Extremely consistent indentation", 0.3);
+        }
+
+        if (consistentSpacing > lines.length * 0.7) {
+            result.addIndicator("CONSISTENT_SPACING", "Highly consistent operator spacing", 0.2);
+        }
+
+        if (templateComments > 2) {
+            result.addIndicator("TEMPLATE_COMMENTS", "Template-style comments present", 0.15);
+        }
+    }
+
+    /**
+     * Analyze structural patterns
+     */
+    private void analyzeStructuralPatterns(String code, AIAnalysisResult result) {
+        // Check for boilerplate code patterns
+        if (code.contains("public static void main") && code.split("\n").length < 20) {
+            result.addIndicator("MINIMAL_MAIN", "Very short main method", 0.4);
+        }
+
+        // Check for comprehensive error handling in small programs
+        if ((code.contains("try") && code.contains("catch")) && code.split("\n").length < 30) {
+            result.addIndicator("OVER_ENGINEERED_ERRORS", "Comprehensive error handling in small program", 0.25);
+        }
+
+        // Check for modern language features in simple code
+        if ((code.contains("var ") || code.contains("auto ")) && code.split("\n").length < 25) {
+            result.addIndicator("MODERN_FEATURES_SIMPLE", "Modern features in simple code", 0.2);
+        }
+
+        // Check for excessive modularization
+        int functionCount = countFunctions(code);
+        if (functionCount > 5 && code.split("\n").length < 50) {
+            result.addIndicator("OVER_MODULARIZED", "Excessive functions for code size", 0.3);
+        }
+    }
+
+    /**
+     * Analyze content and semantic patterns
+     */
+    private void analyzeContentPatterns(String code, AIAnalysisResult result) {
+        String lowerCode = code.toLowerCase();
+
+        // Check for AI-style explanations in comments
+        Pattern explanationPattern = Pattern.compile("//\\s*(This|Here|The).*?(function|method|code).*?\\.", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = explanationPattern.matcher(code);
+        int explanationComments = 0;
+        while (matcher.find()) {
+            explanationComments++;
+        }
+
+        if (explanationComments > 2) {
+            result.addIndicator("EXPLANATORY_COMMENTS", "AI-style explanatory comments", 0.35);
+        }
+
+        // Check for comprehensive documentation in small programs
+        if ((code.contains("/**") || code.contains("/*")) && code.split("\n").length < 40) {
+            result.addIndicator("EXCESSIVE_DOCS", "Comprehensive documentation in small program", 0.2);
+        }
+
+        // Check for textbook-style variable names
+        if (lowerCode.contains("calculate") || lowerCode.contains("process") ||
+                lowerCode.contains("initialize") || lowerCode.contains("execute")) {
+            result.addIndicator("TEXTBOOK_NAMING", "Textbook-style variable/method names", 0.15);
+        }
+
+        // Check for perfect grammar in strings and comments
+        if (hasPerfectGrammar(code)) {
+            result.addIndicator("PERFECT_GRAMMAR", "Perfect grammar in comments/strings", 0.1);
+        }
+    }
+
+    /**
+     * Analyze complexity patterns
+     */
+    private void analyzeComplexityPatterns(String code, AIAnalysisResult result) {
+        int complexityScore = calculateComplexityScore(code);
+        int lines = code.split("\n").length;
+
+        // Check for unusually balanced complexity
+        double complexityRatio = (double) complexityScore / lines;
+        if (complexityRatio > 0.3 && complexityRatio < 0.7) {
+            result.addIndicator("BALANCED_COMPLEXITY", "Unusually balanced complexity distribution", 0.25);
+        }
+
+        // Check for optimal algorithm choices in simple programs
+        if (containsOptimalAlgorithms(code) && lines < 60) {
+            result.addIndicator("OPTIMAL_ALGORITHMS", "Optimal algorithm choices in simple code", 0.3);
+        }
+    }
+
+    /**
+     * Analyze language-specific patterns
+     */
+    private void analyzeLanguageSpecificPatterns(String code, AIAnalysisResult result) {
+        String language = languageChoiceBox.getValue();
+
+        switch (language) {
+            case "Java":
+                analyzeJavaPatterns(code, result);
+                break;
+            case "C++":
+                analyzeCppPatterns(code, result);
+                break;
+            case "Python":
+                analyzePythonPatterns(code, result);
+                break;
+            case "JavaScript":
+                analyzeJavaScriptPatterns(code, result);
+                break;
+        }
+    }
+
+    private void analyzeJavaPatterns(String code, AIAnalysisResult result) {
+        if (code.contains("@Override") && code.split("\n").length < 40) {
+            result.addIndicator("JAVA_ANNOTATIONS", "Advanced annotations in simple Java code", 0.2);
+        }
+
+        if (code.contains("ArrayList<String>") || code.contains("HashMap<")) {
+            result.addIndicator("JAVA_GENERICS", "Generic collections in basic code", 0.15);
+        }
+    }
+
+    private void analyzeCppPatterns(String code, AIAnalysisResult result) {
+        if (code.contains("#include <algorithm>") && code.split("\n").length < 50) {
+            result.addIndicator("CPP_STL", "STL usage in simple C++ code", 0.2);
+        }
+
+        if (code.contains("std::") && !code.contains("std::cout") && code.split("\n").length < 40) {
+            result.addIndicator("CPP_STD_NAMESPACE", "std namespace usage beyond basics", 0.15);
+        }
+    }
+
+    private void analyzePythonPatterns(String code, AIAnalysisResult result) {
+        if (code.contains("def __") && code.split("\n").length < 30) {
+            result.addIndicator("PYTHON_DUNDER", "Dunder methods in simple Python code", 0.25);
+        }
+
+        if (code.contains("list comprehension") || code.contains("lambda")) {
+            result.addIndicator("PYTHON_ADVANCED_FEATURES", "Advanced Python features", 0.2);
+        }
+    }
+
+    private void analyzeJavaScriptPatterns(String code, AIAnalysisResult result) {
+        if (code.contains("const") && code.contains("=>") && code.split("\n").length < 30) {
+            result.addIndicator("JS_MODERN_SYNTAX", "Modern JS syntax in simple code", 0.2);
+        }
+
+        if (code.contains("async") || code.contains("await")) {
+            result.addIndicator("JS_ASYNC", "Async/await in basic code", 0.25);
+        }
+    }
+
+    /**
+     * Display detailed analysis results
+     */
+    private void displayAIAnalysisResults(AIAnalysisResult result) {
+        consoleOutput.appendText("📊 AI Pattern Analysis Results:\n");
+        consoleOutput.appendText("   📝 Code Metrics: " + result.getTotalLines() + " lines, " +
+                result.getTotalCharacters() + " characters\n");
+        consoleOutput.appendText("   🤖 AI Probability: " +
+                String.format("%.1f%%", result.getOverallProbability() * 100) + "\n");
+
+        if (!result.getIndicators().isEmpty()) {
+            consoleOutput.appendText("   🔍 Detected Patterns:\n");
+            for (AIIndicator indicator : result.getIndicators()) {
+                String riskLevel = getRiskLevel(indicator.getWeight());
+                consoleOutput.appendText("      • " + indicator.getDescription() +
+                        " [" + riskLevel + "]\n");
+            }
+        }
+
+        // Overall assessment
+        if (result.getOverallProbability() > 0.8) {
+            consoleOutput.appendText("   🚨 HIGH RISK: Strong indicators of AI-generated code\n");
+        } else if (result.getOverallProbability() > 0.6) {
+            consoleOutput.appendText("   ⚠️  MEDIUM RISK: Some indicators of AI assistance\n");
+        } else if (result.getOverallProbability() > 0.3) {
+            consoleOutput.appendText("   ℹ️  LOW RISK: Minimal AI indicators detected\n");
+        } else {
+            consoleOutput.appendText("   ✅ VERY LOW RISK: Code appears human-written\n");
+        }
+
+        // Add specific recommendations
+        consoleOutput.appendText("   💡 Recommendations: " +
+                getAIRecommendations(result.getOverallProbability()) + "\n");
+    }
+
+    // Helper methods
+    private int countFunctions(String code) {
+        String language = languageChoiceBox.getValue();
+        switch (language) {
+            case "Java": return code.split("(public|private|protected|static)\\s+\\w+\\s+\\w+\\s*\\(").length - 1;
+            case "C++": return code.split("(int|void|double|float|char|bool)\\s+\\w+\\s*\\(").length - 1;
+            case "Python": return code.split("def\\s+\\w+\\s*\\(").length - 1;
+            case "JavaScript": return code.split("function\\s+\\w+\\s*\\(").length - 1;
+            default: return 0;
+        }
+    }
+
+    private boolean hasPerfectGrammar(String code) {
+        // Extract comments and strings for grammar analysis
+        Pattern commentPattern = Pattern.compile("//.*|/\\*.*?\\*/|\".*?\"");
+        Matcher matcher = commentPattern.matcher(code);
+
+        int perfectSentences = 0;
+        int totalSentences = 0;
+
+        while (matcher.find()) {
+            String text = matcher.group();
+            if (text.matches(".*[a-zA-Z].*")) { // Contains letters
+                totalSentences++;
+                // Simple grammar check - starts with capital, ends with period
+                if (text.matches("^[^a-z]*[A-Z].*[\\.!?]\\s*$")) {
+                    perfectSentences++;
                 }
             }
-            if (consistentIndent > lines.length * 0.8) {
-                aiIndicators++;
+        }
+
+        return totalSentences > 0 && (double) perfectSentences / totalSentences > 0.8;
+    }
+
+    private boolean containsOptimalAlgorithms(String code) {
+        String lowerCode = code.toLowerCase();
+        return lowerCode.contains("binary search") || lowerCode.contains("quicksort") ||
+                lowerCode.contains("hashmap") || lowerCode.contains("dynamic programming");
+    }
+
+    private int calculateComplexityScore(String code) {
+        int score = 0;
+        score += code.split("if\\s*\\(").length - 1;
+        score += code.split("for\\s*\\(").length - 1;
+        score += code.split("while\\s*\\(").length - 1;
+        score += code.split("switch\\s*\\(").length - 1;
+        score += code.split("catch\\s*\\(").length - 1;
+        return score;
+    }
+
+    private String getRiskLevel(double weight) {
+        if (weight > 0.25) return "HIGH";
+        if (weight > 0.15) return "MEDIUM";
+        return "LOW";
+    }
+
+    private String getAIRecommendations(double probability) {
+        if (probability > 0.7) {
+            return "Review code originality and ensure proper attribution";
+        } else if (probability > 0.4) {
+            return "Consider adding personal coding style and comments";
+        } else {
+            return "Continue with current coding practices";
+        }
+    }
+
+    /**
+     * Data classes for AI analysis results
+     */
+    private static class AIAnalysisResult {
+        private List<AIIndicator> indicators = new ArrayList<>();
+        private int totalLines;
+        private int totalCharacters;
+        private double overallProbability;
+
+        public void addIndicator(String type, String description, double weight) {
+            indicators.add(new AIIndicator(type, description, weight));
+        }
+
+        public void calculateOverallProbability() {
+            double totalWeight = 0;
+            for (AIIndicator indicator : indicators) {
+                totalWeight += indicator.getWeight();
             }
+            this.overallProbability = Math.min(1.0, totalWeight);
         }
 
-        // Check for comprehensive comments
-        if (code.contains("//") || code.contains("/*") || code.contains("#")) {
-            aiIndicators++;
+        // Getters
+        public List<AIIndicator> getIndicators() { return indicators; }
+        public int getTotalLines() { return totalLines; }
+        public int getTotalCharacters() { return totalCharacters; }
+        public double getOverallProbability() { return overallProbability; }
+
+        public void setTotalLines(int totalLines) { this.totalLines = totalLines; }
+        public void setTotalCharacters(int totalCharacters) { this.totalCharacters = totalCharacters; }
+    }
+
+    private static class AIIndicator {
+        private String type;
+        private String description;
+        private double weight;
+
+        public AIIndicator(String type, String description, double weight) {
+            this.type = type;
+            this.description = description;
+            this.weight = weight;
         }
 
-        // Check for error handling
-        if (code.contains("try") || code.contains("catch") || code.contains("exception")) {
-            aiIndicators++;
-        }
-
-        // Check for modern language features
-        if (code.contains("->") || code.contains("auto ") || code.contains("var ")) {
-            aiIndicators++;
-        }
-
-        // Check for template-like structure
-        if (code.contains("public static void main") || code.contains("def main():") ||
-                code.contains("int main()")) {
-            aiIndicators++;
-        }
-
-        return (double) aiIndicators / totalChecks;
+        // Getters
+        public String getType() { return type; }
+        public String getDescription() { return description; }
+        public double getWeight() { return weight; }
     }
 
     /**
